@@ -7,6 +7,28 @@ datasource db {
   provider = "postgresql"
 }
 
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  upiId     String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  wallet Wallet?
+}
+
+model Wallet {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  balance   Float    @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
 model Merchant {
   id                  String   @id @default(cuid())
   name                String
@@ -19,44 +41,44 @@ model Merchant {
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
-  transactions        Transaction[]
-  paymentMethods      MerchantPaymentMethod[]
+  transactions   Transaction[]
+  paymentMethods MerchantPaymentMethod[]
 }
 
 model PaymentMethod {
-  id                   String   @id @default(cuid())
-  code                 String   @unique
-  name                 String
-  category             String
-  isActive             Boolean  @default(true)
-  minAmount            Float?
-  maxAmount            Float?
-  requiresAuth         Boolean  @default(false)
-  settlementDays       Int?
-  feePercent           Float?
-  feeFlat              Float?
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  id             String   @id @default(cuid())
+  code           String   @unique
+  name           String
+  category       String
+  isActive       Boolean  @default(true)
+  minAmount      Float?
+  maxAmount      Float?
+  requiresAuth   Boolean  @default(false)
+  settlementDays Int?
+  feePercent     Float?
+  feeFlat        Float?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  merchants            MerchantPaymentMethod[]
-  transactions         Transaction[]
+  merchants    MerchantPaymentMethod[]
+  transactions Transaction[]
 }
 
 model MerchantPaymentMethod {
-  id                  String   @id @default(cuid())
-  merchantId          String
-  paymentMethodId     String
-  isActive             Boolean  @default(true)
-  priority             Int?
-  feeOverride          Float?
-  minOverride          Float?
-  maxOverride          Float?
-  settlementPriority   Int?
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  id                 String   @id @default(cuid())
+  merchantId         String
+  paymentMethodId    String
+  isActive           Boolean  @default(true)
+  priority           Int?
+  feeOverride        Float?
+  minOverride        Float?
+  maxOverride        Float?
+  settlementPriority Int?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
-  merchant             Merchant      @relation(fields: [merchantId], references: [id])
-  paymentMethod        PaymentMethod @relation(fields: [paymentMethodId], references: [id])
+  merchant      Merchant      @relation(fields: [merchantId], references: [id])
+  paymentMethod PaymentMethod @relation(fields: [paymentMethodId], references: [id])
 
   @@unique([merchantId, paymentMethodId])
   @@index([merchantId])
@@ -64,28 +86,28 @@ model MerchantPaymentMethod {
 }
 
 model Transaction {
-  id                       String   @id @default(cuid())
-  merchantId               String
-  paymentMethodId          String
-  customerReference        String?
-  amount                   Float
-  currency                 String
-  status                   String
-  idempotencyKey           String
-  referenceId              String
-  paymentNetworkReference  String?
-  authCode                 String?
-  failureCode              String?
-  feeAmount                Float?
-  taxAmount                Float?
-  netAmount                Float?
-  metadata                 String?
-  complianceFlags          String?
-  createdAt                DateTime @default(now())
-  updatedAt                DateTime @updatedAt
+  id                      String   @id @default(cuid())
+  merchantId              String
+  paymentMethodId         String
+  customerReference       String?
+  amount                  Float
+  currency                String
+  status                  String
+  idempotencyKey          String
+  referenceId             String
+  paymentNetworkReference String?
+  authCode                String?
+  failureCode             String?
+  feeAmount               Float?
+  taxAmount               Float?
+  netAmount               Float?
+  metadata                String?
+  complianceFlags         String?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
 
-  merchant                 Merchant      @relation(fields: [merchantId], references: [id])
-  paymentMethod            PaymentMethod @relation(fields: [paymentMethodId], references: [id])
+  merchant      Merchant      @relation(fields: [merchantId], references: [id])
+  paymentMethod PaymentMethod @relation(fields: [paymentMethodId], references: [id])
 
   @@index([merchantId])
   @@index([paymentMethodId])

@@ -16,6 +16,52 @@ const prisma = new PrismaClient({
   adapter,
 });
 
+const demoUsers = [
+  {
+    name: "Abhishek",
+    email: "abhishek@nexapay.demo",
+    upiId: "abhishek@nexapay",
+    balance: 5000,
+    isActive: true,
+  },
+  {
+    name: "Rahul",
+    email: "rahul@nexapay.demo",
+    upiId: "rahul@nexapay",
+    balance: 5000,
+    isActive: true,
+  },
+] as const;
+
+const paymentMethods = [
+  {
+    code: "UPI",
+    name: "Unified Payments Interface",
+    category: "BANK_TRANSFER",
+    isActive: true,
+    minAmount: 1,
+    maxAmount: 100000,
+    requiresAuth: false,
+    settlementDays: 1,
+    feePercent: 1.5,
+    feeFlat: 0,
+    priority: 1,
+  },
+  {
+    code: "CARD",
+    name: "Card Payment",
+    category: "CARD",
+    isActive: true,
+    minAmount: 1,
+    maxAmount: 100000,
+    requiresAuth: false,
+    settlementDays: 1,
+    feePercent: 2,
+    feeFlat: 0,
+    priority: 2,
+  },
+] as const;
+
 async function main() {
   console.log("🌱 Seeding Neon database...");
 
@@ -35,47 +81,112 @@ async function main() {
     },
   });
 
-  const paymentMethod = await prisma.paymentMethod.upsert({
-    where: {
-      code: "UPI",
-    },
-    update: {},
-    create: {
-      code: "UPI",
-      name: "Unified Payments Interface",
-      category: "BANK_TRANSFER",
-      isActive: true,
-      minAmount: 1,
-      maxAmount: 100000,
-      requiresAuth: false,
-      settlementDays: 1,
-      feePercent: 1.5,
-      feeFlat: 0,
-    },
-  });
+  const seededPaymentMethods = [];
 
-  await prisma.merchantPaymentMethod.upsert({
-    where: {
-      merchantId_paymentMethodId: {
+  for (const paymentMethodConfig of paymentMethods) {
+    const paymentMethod = await prisma.paymentMethod.upsert({
+      where: {
+        code: paymentMethodConfig.code,
+      },
+      update: {
+        name: paymentMethodConfig.name,
+        category: paymentMethodConfig.category,
+        isActive: paymentMethodConfig.isActive,
+        minAmount: paymentMethodConfig.minAmount,
+        maxAmount: paymentMethodConfig.maxAmount,
+        requiresAuth: paymentMethodConfig.requiresAuth,
+        settlementDays: paymentMethodConfig.settlementDays,
+        feePercent: paymentMethodConfig.feePercent,
+        feeFlat: paymentMethodConfig.feeFlat,
+      },
+      create: {
+        code: paymentMethodConfig.code,
+        name: paymentMethodConfig.name,
+        category: paymentMethodConfig.category,
+        isActive: paymentMethodConfig.isActive,
+        minAmount: paymentMethodConfig.minAmount,
+        maxAmount: paymentMethodConfig.maxAmount,
+        requiresAuth: paymentMethodConfig.requiresAuth,
+        settlementDays: paymentMethodConfig.settlementDays,
+        feePercent: paymentMethodConfig.feePercent,
+        feeFlat: paymentMethodConfig.feeFlat,
+      },
+    });
+
+    await prisma.merchantPaymentMethod.upsert({
+      where: {
+        merchantId_paymentMethodId: {
+          merchantId: merchant.id,
+          paymentMethodId: paymentMethod.id,
+        },
+      },
+      update: {
+        isActive: true,
+        priority: paymentMethodConfig.priority,
+        settlementPriority: paymentMethodConfig.priority,
+      },
+      create: {
         merchantId: merchant.id,
         paymentMethodId: paymentMethod.id,
+        isActive: true,
+        priority: paymentMethodConfig.priority,
+        settlementPriority: paymentMethodConfig.priority,
       },
-    },
-    update: {
-      isActive: true,
-    },
-    create: {
-      merchantId: merchant.id,
-      paymentMethodId: paymentMethod.id,
-      isActive: true,
-      priority: 1,
-      settlementPriority: 1,
-    },
-  });
+    });
+
+    seededPaymentMethods.push({
+      id: paymentMethod.id,
+      code: paymentMethod.code,
+      isActive: paymentMethod.isActive,
+    });
+  }
+
+  const seededUsers = [];
+
+  for (const demoUser of demoUsers) {
+    const user = await prisma.user.upsert({
+      where: {
+        upiId: demoUser.upiId,
+      },
+      update: {
+        name: demoUser.name,
+        email: demoUser.email,
+        isActive: demoUser.isActive,
+      },
+      create: {
+        name: demoUser.name,
+        email: demoUser.email,
+        upiId: demoUser.upiId,
+        isActive: demoUser.isActive,
+      },
+    });
+
+    const wallet = await prisma.wallet.upsert({
+      where: {
+        userId: user.id,
+      },
+      update: {
+        balance: demoUser.balance,
+      },
+      create: {
+        userId: user.id,
+        balance: demoUser.balance,
+      },
+    });
+
+    seededUsers.push({
+      name: user.name,
+      email: user.email,
+      upiId: user.upiId,
+      balance: wallet.balance,
+      isActive: user.isActive,
+    });
+  }
 
   console.log("✅ Seed successful!");
   console.log("Merchant ID:", merchant.id);
-  console.log("Payment Method ID:", paymentMethod.id);
+  console.log("Payment Methods:", seededPaymentMethods);
+  console.log("Demo Users:", seededUsers);
 }
 
 main()

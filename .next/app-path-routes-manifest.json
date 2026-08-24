@@ -1,0 +1,9 @@
+{
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/api/v1/payments/route": "/api/v1/payments",
+  "/api/v1/transactions/route": "/api/v1/transactions",
+  "/api/v1/users/[userId]/route": "/api/v1/users/[userId]",
+  "/api/v1/users/[userId]/transactions/route": "/api/v1/users/[userId]/transactions",
+  "/page": "/"
+}
