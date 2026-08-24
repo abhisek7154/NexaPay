@@ -1,7 +1,12 @@
 const { PrismaClient } = require("./src/generated/prisma/client");
 const { PrismaPg } = require("@prisma/adapter-pg");
 
-const connectionString = process.env.DATABASE_URL || "postgresql://neondb_owner:npg_Zoui4PcATK8B@ep-soft-band-axmvmpvk-pooler.c-4.us-east-2.aws.neon.tech/neondb?sslmode=require";
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error("DATABASE_URL is not defined");
+}
+
 const adapter = new PrismaPg({ connectionString });
 const prisma = new PrismaClient({ adapter });
 
